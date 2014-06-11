@@ -1,5 +1,0 @@
-{ 
-    "error": {
-        "reason" : "Sorry! Requested resource not found",
-        "code" : 404 }
-}

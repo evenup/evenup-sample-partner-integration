@@ -1,5 +1,6 @@
 package com.evenup.sample.rest.client.swing
 
+import groovy.json.JsonException;
 import groovy.json.JsonOutput;
 
 import javax.swing.JTextArea;
@@ -29,7 +30,12 @@ class SwingJsonWriter implements JsonWriter {
     JTextArea to
 
     public void writeReceived(int status, String json) {
-        from.text = "RESPONSE STATUS: ${status}\n" + JsonOutput.prettyPrint(json)
+        try {
+            from.text = "RESPONSE STATUS: ${status}\n" + JsonOutput.prettyPrint(json)
+        } catch (JsonException e) {
+            println "Unable to parse: ${json}"
+            println e
+        }
     }
 
     public void writeSent(String verb, String uri, String json) {
