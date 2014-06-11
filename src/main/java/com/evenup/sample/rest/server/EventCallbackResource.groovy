@@ -2,6 +2,7 @@ package com.evenup.sample.rest.server;
 
 import java.util.concurrent.BlockingQueue;
 
+import groovy.json.JsonException;
 import groovy.json.JsonOutput;
 import groovy.json.JsonSlurper;
 
@@ -53,7 +54,14 @@ public class EventCallbackResource {
         
         messageQ.add(JsonOutput.prettyPrint(jsonText))
         
-        def jsonObj = slurper.parseText(jsonText)
+        // we should just swallow errors here:
+        def jsonObj
+        try {
+            jsonObj = slurper.parseText(jsonText)
+        } catch (JsonException e) {
+            messageQ.add("Unable to parse JSON in event: ${jsonText}")
+            return Response.ok().build();
+        }
         
         // In a real environment, I would set up DTO objects to hold this data.
         // Groovy allows me to deal with it quickly, just creating objects on 

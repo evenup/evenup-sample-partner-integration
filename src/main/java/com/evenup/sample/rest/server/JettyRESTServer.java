@@ -9,7 +9,9 @@ import org.apache.commons.cli.CommandLineParser;
 import org.apache.commons.cli.Options;
 import org.apache.commons.cli.ParseException;
 import org.eclipse.jetty.server.Server;
+import org.eclipse.jetty.servlet.ServletHolder;
 import org.eclipse.jetty.webapp.WebAppContext;
+import org.glassfish.jersey.servlet.ServletContainer;
 
 /**
  * A stand-alone HTTP server.  It can be instantiated and run elsewhere,
@@ -37,15 +39,19 @@ public class JettyRESTServer implements Runnable {
         // FIXME figure out the new jersey DI framework...
         EventCallbackResource.setMessageQ(messageQ);
     }
-
+    
     public void run() {
         try {
             // This is all just plumbing.  It starts an HTTP server
-            // which uses src/main/webapp/WEB-INF/web.xml to look
+            // and looks in com.evenup.sample.rest.server
             // for EventCallbackResource, with the path "events".
             WebAppContext webapp = new WebAppContext();
             webapp.setContextPath("/");
-            webapp.setResourceBase("src/main/webapp");
+            webapp.setWar("/");
+            ServletContainer restServlet = new ServletContainer();
+            final ServletHolder servletHolder = new ServletHolder(restServlet);
+            servletHolder.setInitParameter("jersey.config.server.provider.packages", "com.evenup.sample.rest.server");
+            webapp.addServlet(servletHolder, "/*");
             server = new Server(getPort());
             server.setHandler(webapp);
             server.start();
@@ -94,7 +100,6 @@ public class JettyRESTServer implements Runnable {
         Thread listenerThread = new Thread(listener);
         listenerThread.start();
         try {
-        
             new JettyRESTServer(port, messageQ).run();
         } finally {
             listener.setStop(true);
