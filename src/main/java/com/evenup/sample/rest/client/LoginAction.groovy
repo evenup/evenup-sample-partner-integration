@@ -1,15 +1,14 @@
 package com.evenup.sample.rest.client
 
-import groovy.json.JsonSlurper;
+import groovy.json.JsonSlurper
 
-import javax.ws.rs.client.Client;
-import javax.ws.rs.client.ClientBuilder;
-import javax.ws.rs.client.Entity;
-import javax.ws.rs.core.MediaType;
-import javax.ws.rs.core.Response;
+import javax.ws.rs.client.Client
+import javax.ws.rs.client.ClientBuilder
+import javax.ws.rs.client.Entity
+import javax.ws.rs.core.MediaType
+import javax.ws.rs.core.Response
 
-import org.glassfish.jersey.client.ClientResponse;
-import org.glassfish.jersey.client.authentication.HttpAuthenticationFeature;
+import org.glassfish.jersey.client.authentication.HttpAuthenticationFeature
 
 /**
  * Used to log in to EvenUp.  Note that {@link #login()} returns a {@link Session}
@@ -28,7 +27,7 @@ import org.glassfish.jersey.client.authentication.HttpAuthenticationFeature;
  *
  */
 class LoginAction extends BaseAction {
-
+    
     /**
      * Log in to EvenUp and start a session.
      * 

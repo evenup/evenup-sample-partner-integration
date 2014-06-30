@@ -40,7 +40,12 @@ class SetRESTCallbackAction extends BaseAction {
 
         // When we POST this, it will add this to "notification methods".
         // N.B. We are using the sessionId from logging in.
-        String json = "{\"restCallback\": \"${uri}\"}"
+        String json
+        if (uri == null || uri.length() < 1) {
+            json = '{"restCallback": null}'
+        } else {
+            json = "{\"restCallback\": \"${uri}\"}"
+        }
 
         String path = session.partnerUri + '/notification'
         jsonWriter.writeSent("POST", path, json)

@@ -14,6 +14,9 @@ import javax.ws.rs.Produces;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 
+import com.evenup.sample.rest.accounts.Account;
+import com.evenup.sample.rest.accounts.AccountCollection;
+
 /**
  * A simple REST resource that listens for EvenUp events on the 
  * path - "/events".  For now, it just puts the JSON for these
@@ -40,6 +43,7 @@ public class EventCallbackResource {
     // Should use Jersey's built-in DI framework.
     // However, this is a sample...
     static BlockingQueue<String> messageQ
+    static AccountCollection accountCollection
     
     /**
      * This resource just takes those callback events from 
@@ -67,9 +71,18 @@ public class EventCallbackResource {
         // Groovy allows me to deal with it quickly, just creating objects on 
         // the fly. 
         if (jsonObj.type.equals("ACCOUNT_CREATED")) {
-            println "Someone has activated their invitation (${jsonObj.token}) in EvenUp!  Their account guid is ${jsonObj.accountGuid}"
-            // TODO store the link b/twn account number and EvenUp's guid.  This
-            // will allow me to query and send events to that account later. 
+            println '''
+                       Someone has activated their invitation (${jsonObj.token}) in EvenUp!  
+                       Their account guid is ${jsonObj.accountGuid}'''
+            // This will allow me to query and send events to that account later.
+            accountCollection.add(new Account(  jsonObj.accountGuid,
+                                            jsonObj.accountNumber,
+                                            jsonObj.token,
+                                            jsonObj.firstName,
+                                            jsonObj.lastName,
+                                            jsonObj.acn,
+                                            jsonObj.acnExtension,
+                                            jsonObj.acnPass)) 
         }
         
         return Response.ok().build();

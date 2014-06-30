@@ -9,12 +9,16 @@ import java.util.concurrent.LinkedBlockingQueue
 
 import javax.swing.*
 
-import com.evenup.sample.rest.client.AddInvitationAction;
+import com.evenup.sample.rest.accounts.Account;
+import com.evenup.sample.rest.accounts.AccountCollection
+import com.evenup.sample.rest.client.AddInvitationAction
+import com.evenup.sample.rest.client.GenericGetAction;
 import com.evenup.sample.rest.client.JsonWriter
 import com.evenup.sample.rest.client.LoginAction
 import com.evenup.sample.rest.client.PartnerDetailsAction
-import com.evenup.sample.rest.client.Session;
-import com.evenup.sample.rest.client.SetRESTCallbackAction;
+import com.evenup.sample.rest.client.Session
+import com.evenup.sample.rest.client.SetRESTCallbackAction
+import com.evenup.sample.rest.client.TemplateEventAction;
 import com.evenup.sample.rest.server.JettyRESTServer
 
 /**
@@ -37,6 +41,7 @@ class MainClientView {
 
     Executor executor = Executors.newFixedThreadPool(4);
 
+    AccountCollection accountCollection = new AccountCollection('/tmp/accountDB')
     JettyRESTServer restServer
     BlockingQueue<String> messageQ = new LinkedBlockingQueue<String>()
     SwingMessageQueueListener mqListener
@@ -44,8 +49,10 @@ class MainClientView {
     LoginAction loginAction
     SetRESTCallbackAction setRESTCallbackAction
     AddInvitationAction addInvitationAction
-    PartnerDetailsAction partnerDetailsAction
-
+    GenericGetAction partnerDetailsAction
+    TemplateEventAction templateEventAction
+    GenericGetAction partnerTemplatesAction
+    
     // used to build all Swing objects.
     def swing = new SwingBuilder()
 
@@ -100,7 +107,7 @@ class MainClientView {
             def dialog = pane.createDialog(frame, 'Error')
             dialog.show()
         } else {
-            partnerDetailsAction.getDetails(session)
+            partnerDetailsAction.get(session, session.getPartnerUri())
         }
     }
 
@@ -129,12 +136,17 @@ class MainClientView {
         }
     }
 
-    def addInvitation() {
+    def sessionCheck() {
         if (session == null) {
             def pane = swing.optionPane(message:'You must log in first.')
-            def dialog = pane.createDialog(frame, 'Error')
-            dialog.show()
-        } else {
+                    def dialog = pane.createDialog(frame, 'Error')
+                    dialog.show()
+            return false
+        }
+        return true
+    }
+    def addInvitation() {
+        if (sessionCheck()) {
             def serverDialog = swing.dialog(title: 'Add Invitation', modal:true, alwaysOnTop: true, locationRelativeTo: null, resizable: false)
             def panel = swing.panel{
                 vbox {
@@ -144,6 +156,81 @@ class MainClientView {
                     }
                     hbox{
                         button('OK', actionPerformed: {addInvitationAction.addInvite(session, accountNumber.text); serverDialog.dispose()})
+                        button('Cancel', actionPerformed: {serverDialog.dispose()})
+                    }
+                }
+            }
+            serverDialog.getContentPane().add(panel)
+            serverDialog.pack()
+            serverDialog.show()
+        }
+    }
+    
+    def sendTemplateEvent(accountNum, template, templates) {
+        Account account = accountCollection.getForNumber(accountNum)
+        // now find all the variables in the template and present them in a form:
+        def matcher = template.templateText =~ /\$\{(.*?)\}/
+        def serverDialog = swing.dialog(title: 'Template Event', modal:true, alwaysOnTop: true, locationRelativeTo: null, resizable: true)
+        def templateIds = ['None'] + templates.collect({it.id})
+        templateIds.unique()
+        def panel = swing.panel {
+            JComboBox<String> templateChosen
+            def fieldIds = [:]
+            vbox {
+                matcher.each {
+                    def fieldName = it[1]
+                    hbox {
+                        label(text: fieldName)
+                        def fieldId = fieldName + '-id'
+                        fieldIds[fieldName] = textField(columns: 30, id: fieldId)
+                    }
+                }
+                hbox{
+                    label(text: 'Reply Template')
+                    templateChosen = comboBox(items: templateIds)
+                }
+                hbox{
+                    button('Send', actionPerformed: {templateEventAction.sendTemplateEvent(session, 
+                        account.getAccountGuid(), 
+                        template.id, 
+                        templateChosen.selectedItemReminder.equals('None') ? null : templateChosen.selectedItemReminder, 
+                        fieldIds.collectEntries([:]) {k,v -> [k, v.text]}); 
+                        serverDialog.dispose()})
+                    button('Cancel', actionPerformed: {serverDialog.dispose()})
+                }
+            }
+        }
+        serverDialog.getContentPane().add(panel)
+        serverDialog.pack()
+        serverDialog.show()
+    }
+    
+    def prepareTemplateEvent() {
+        if (sessionCheck()) {
+            def templates = partnerTemplatesAction.get(session, "${session.getPartnerUri()}/templates")
+            def templateMap = [:]
+            templates.each {
+                templateMap[it.id] = it
+            }
+            def serverDialog = swing.dialog(title: 'Accounts', modal:true, 
+                                            alwaysOnTop: true, locationRelativeTo: null, 
+                                            resizable: true)
+            def panel = swing.panel {
+                JComboBox<String> account
+                JComboBox<String> template
+                vbox {
+                    hbox{
+                        label(text: 'Choose Account')
+                        account = comboBox(items:accountCollection.getAccountNumbers())
+                    }
+                    hbox{
+                        label(text: 'Choose Template')
+                        template = comboBox(items:templates.collect({it.id}))
+                    }
+                    hbox{
+                        button('OK', actionPerformed: {
+                            sendTemplateEvent(account.selectedItem, templateMap[template.selectedItem], templates); 
+                            serverDialog.dispose()})
                         button('Cancel', actionPerformed: {serverDialog.dispose()})
                     }
                 }
@@ -197,8 +284,11 @@ class MainClientView {
         loginAction = new LoginAction(jsonWriter: jWriter)
         setRESTCallbackAction = new SetRESTCallbackAction(jsonWriter: jWriter)
         addInvitationAction = new AddInvitationAction(jsonWriter: jWriter)
-        partnerDetailsAction = new PartnerDetailsAction(jsonWriter: jWriter)
+        partnerDetailsAction = new GenericGetAction(jsonWriter: jWriter)
+        partnerTemplatesAction = new GenericGetAction(jsonWriter: jWriter)
+        templateEventAction = new TemplateEventAction(jsonWriter: jWriter)
     }
+    
 
     /**
      * This my first attempt at using SwingBuilder.  It is meant to 
@@ -220,6 +310,9 @@ class MainClientView {
                         menuItem(text: 'View Details', mnemonic: 'D', actionPerformed: {showPartnerDetails()})
                         menuItem(text: 'Set REST Callback', mnemonic: 'N', actionPerformed: {setRESTCallback()})
                         menuItem(text: 'Add Invitation', mnemonic: 'I', actionPerformed: {addInvitation()})
+                    }
+                    menu(text: "Accounts", mnemonic: 'A') {
+                        menuItem(text: 'Send Template Event', mnemonic: 'T', actionPerformed: {prepareTemplateEvent()})
                     }
                     menu(text: "Callback Server") {
                         menuItem(text: 'Start', mnemonic: 'S', actionPerformed: {startServer()})
@@ -249,7 +342,7 @@ class MainClientView {
         executor.execute(mqListener)
         createActions(jWriter)
         // i made 9000 the default, but it should get set by the gui
-        restServer = new JettyRESTServer(9000, messageQ)
+        restServer = new JettyRESTServer(9000, messageQ, accountCollection)
     }
 
     static void main(args) {
