@@ -38,10 +38,21 @@ import com.evenup.sample.rest.server.JettyRESTServer
  * 
  */
 class MainClientView {
+    
+    public MainClientView(accountDBPath) {
+        accountCollection = new AccountCollection(accountDBPath)
+    }
+    
+    public MainClientView() {
+        def homeDir = System.getProperty("user.home")
+        def dirName = homeDir + '/.evenup-sample'
+        new File(dirName).mkdir()
+        accountCollection = new AccountCollection(dirName + '/accountDB')
+    }
 
     Executor executor = Executors.newFixedThreadPool(4);
 
-    AccountCollection accountCollection = new AccountCollection('/tmp/accountDB')
+    AccountCollection accountCollection 
     JettyRESTServer restServer
     BlockingQueue<String> messageQ = new LinkedBlockingQueue<String>()
     SwingMessageQueueListener mqListener
