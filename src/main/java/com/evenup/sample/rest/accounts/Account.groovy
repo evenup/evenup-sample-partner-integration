@@ -1,9 +1,11 @@
-package com.evenup.sample.rest.client
+package com.evenup.sample.rest.accounts
+
+import groovy.transform.Immutable
+
 
 /**
- * Holds what is needed for a Session.  {@link LoginAction#login}
- * returns a new Session, which is then passed to 
- * every other action.
+ * A little immutable class to ferry Account data from the REST Server 
+ * to the app, as well as store it for later use.
  * <br><br>
  * Copyright 2014 EvenUp, Inc.
  * <br><br>
@@ -17,11 +19,15 @@ package com.evenup.sample.rest.client
  * @author Kevin G. McManus
  *
  */
-class Session {
-    static final String X_EVEN_UP_TOKEN = "X-EvenUp-Token"
-    
-    String sessionId
-    String partnerUri
-    String baseUri
+@Immutable class Account implements Serializable {
+
+    String accountGuid;
+    String accountNumber;
+    String token;
+    String firstName;
+    String lastName;
+    String acn;
+    String acnExtension;
+    String acnPass;
     
 }

@@ -1,25 +1,25 @@
 package com.evenup.sample.rest.client
 
-import groovy.json.JsonSlurper;
+import groovy.json.JsonSlurper
 
-import javax.ws.rs.client.Client;
-import javax.ws.rs.client.ClientBuilder;
-import javax.ws.rs.client.Entity;
-import javax.ws.rs.core.MediaType;
-import javax.ws.rs.core.Response;
+import javax.ws.rs.client.Client
+import javax.ws.rs.client.ClientBuilder
+import javax.ws.rs.client.Entity
+import javax.ws.rs.core.MediaType
+import javax.ws.rs.core.Response
 
-import org.glassfish.jersey.client.ClientResponse;
-import org.glassfish.jersey.client.authentication.HttpAuthenticationFeature;
+import org.glassfish.jersey.client.authentication.HttpAuthenticationFeature
+
 
 /**
  * Used to log in to EvenUp.  Note that {@link #login()} returns a {@link Session}
  * when it's successful and null otherwise.
- *  
+ * <br><br>
  * Copyright 2014 EvenUp, Inc.
- *
+ * <br><br>
  * THIS CODE IS INTENDED AS AN EXAMPLE ONLY.  IT HAS NOT BEEN TESTED AND 
  * SHOULD NOT BE USED IN A PRODUCTION ENVIRONMENT.
- * 
+ * <br><br>
  * THE  CODE IS  PROVIDED "AS  IS",  WITHOUT WARRANTY  OF ANY  KIND, EXPRESS  
  * OR IMPLIED,  INCLUDING BUT  NOT LIMITED  TO THE WARRANTIES  OF 
  * MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT.
@@ -28,7 +28,7 @@ import org.glassfish.jersey.client.authentication.HttpAuthenticationFeature;
  *
  */
 class LoginAction extends BaseAction {
-
+    
     /**
      * Log in to EvenUp and start a session.
      * 

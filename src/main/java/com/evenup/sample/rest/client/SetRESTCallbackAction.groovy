@@ -10,12 +10,12 @@ import javax.ws.rs.core.Response;
 
 /**
  * Sets the REST Callback end point for the partner in session.
- * 
+ * <br><br>
  * Copyright 2014 EvenUp, Inc.
- *
+ * <br><br>
  * THIS CODE IS INTENDED AS AN EXAMPLE ONLY.  IT HAS NOT BEEN TESTED AND 
  * SHOULD NOT BE USED IN A PRODUCTION ENVIRONMENT.
- * 
+ * <br><br>
  * THE  CODE IS  PROVIDED "AS  IS",  WITHOUT WARRANTY  OF ANY  KIND, EXPRESS  
  * OR IMPLIED,  INCLUDING BUT  NOT LIMITED  TO THE WARRANTIES  OF 
  * MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT.
@@ -40,7 +40,12 @@ class SetRESTCallbackAction extends BaseAction {
 
         // When we POST this, it will add this to "notification methods".
         // N.B. We are using the sessionId from logging in.
-        String json = "{\"restCallback\": \"${uri}\"}"
+        String json
+        if (uri == null || uri.length() < 1) {
+            json = '{"restCallback": null}'
+        } else {
+            json = "{\"restCallback\": \"${uri}\"}"
+        }
 
         String path = session.partnerUri + '/notification'
         jsonWriter.writeSent("POST", path, json)

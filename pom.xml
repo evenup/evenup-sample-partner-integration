@@ -53,6 +53,11 @@
       <artifactId>groovy-all</artifactId>
       <version>${groovy-version}</version>
     </dependency>
+    <dependency>
+        <groupId>org.mapdb</groupId>
+        <artifactId>mapdb</artifactId>
+        <version>1.0.4</version>
+    </dependency>
   </dependencies>
 
   <build>

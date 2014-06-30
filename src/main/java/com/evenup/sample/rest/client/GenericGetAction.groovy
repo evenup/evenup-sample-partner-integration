@@ -1,15 +1,13 @@
 package com.evenup.sample.rest.client
 
-
 import groovy.json.JsonSlurper;
 
-import javax.ws.rs.client.Client;
-import javax.ws.rs.client.ClientBuilder;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 
 /**
- * Gets the details for a partner object, as specified in {@link Session#getPartnerUri()}
+ * Can be used to perform a RESTful GET on a URI that the partner is 
+ * permitted to.
  * <br><br>
  * Copyright 2014 EvenUp, Inc.
  * <br><br>
@@ -23,28 +21,26 @@ import javax.ws.rs.core.Response;
  * @author Kevin G. McManus
  *
  */
-class PartnerDetailsAction extends BaseAction {
+class GenericGetAction extends BaseAction {
 
-    def getDetails(Session session) {
-
+    def get(Session session, String uri) {
         if (session.sessionId == null) {
             throw new IllegalStateException('You must login in prior to calling this.')
         }
 
-        jsonWriter.writeSent("GET", session.partnerUri, '')
+        jsonWriter.writeSent("GET", uri, '')
 
-        // We need to pass the token (sessionId) in session that we
-        // received when loggin in.
-        Response response = client.target(session.partnerUri)
+        Response response = client.target(uri)
                 .request(MediaType.APPLICATION_JSON)
                 .header(Session.X_EVEN_UP_TOKEN, session.sessionId)
                 .get()
-        
+
         def json = response.readEntity(String.class)
         jsonWriter.writeReceived(response.getStatus(), json)
+
         if (response.getStatus() != 200) {
             // in lieu of real error handling...
-            println("Unable to get partner: " + response.getStatus() + "," + json)
+            println("Unable to get ${uri}: " + response.getStatus() + "," + json)
             return null;
         }
 
