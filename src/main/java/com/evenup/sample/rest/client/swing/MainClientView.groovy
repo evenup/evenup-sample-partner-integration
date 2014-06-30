@@ -100,6 +100,7 @@ class MainClientView {
         }
         loginDialog.getContentPane().add(panel)
         loginDialog.pack()
+        loginDialog.setLocationRelativeTo(frame)
         loginDialog.show()
     }
 
@@ -122,8 +123,7 @@ class MainClientView {
     // an attempt to consolidate how all these dialogs are created.
     def createDialog(title) {
         return swing.dialog(title: title, 
-                            modal:true, alwaysOnTop: true, 
-                            locationRelativeTo: null, resizable: false)
+                            modal:true, alwaysOnTop: true)
     }
 
     def setRESTCallback() {
@@ -145,6 +145,7 @@ class MainClientView {
             }
             serverDialog.getContentPane().add(panel)
             serverDialog.pack()
+            serverDialog.setLocationRelativeTo(frame)
             serverDialog.show()
         }
     }
@@ -178,6 +179,7 @@ You can enter this in the UI to create an account."""),
             }
             serverDialog.getContentPane().add(panel)
             serverDialog.pack()
+            serverDialog.setLocationRelativeTo(frame)
             serverDialog.show()
         }
     }
@@ -230,6 +232,7 @@ You can enter this in the UI to create an account."""),
             }
             serverDialog.getContentPane().add(panel)
             serverDialog.pack()
+            serverDialog.setLocationRelativeTo(frame)
             serverDialog.show()
         }
     }
@@ -270,6 +273,7 @@ You can enter this in the UI to create an account."""),
             }
             serverDialog.getContentPane().add(panel)
             serverDialog.pack()
+            serverDialog.setLocationRelativeTo(frame)
             serverDialog.show()
         }
     }
@@ -307,6 +311,7 @@ You can enter this in the UI to create an account."""),
         }
         serverDialog.getContentPane().add(panel)
         serverDialog.pack()
+        serverDialog.setLocationRelativeTo(frame)
         serverDialog.show()
     }
 
