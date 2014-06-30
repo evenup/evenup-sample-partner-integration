@@ -75,7 +75,7 @@ class MainClientView {
     JsonWriter jWriter
 
     def login() {
-        def loginDialog = swing.dialog(title: 'Login', modal:true, alwaysOnTop: true, locationRelativeTo: null, resizable: false)
+        def loginDialog = createDialog('Login')
         def panel = swing.panel{
             vbox {
                 hbox{
@@ -91,7 +91,9 @@ class MainClientView {
                     passwordField(columns: 20, id: 'password')
                 }
                 hbox{
-                    button('OK', actionPerformed: {session = loginAction.login(host.text, name.text, password.text); loginDialog.dispose()})
+                    button('OK', actionPerformed: {
+                        session = loginAction.login(host.text, name.text, password.text); 
+                        loginDialog.dispose()})
                     button('Cancel', actionPerformed: {loginDialog.dispose()})
                 }
             }
@@ -101,23 +103,32 @@ class MainClientView {
         loginDialog.show()
     }
 
-    def showPartnerDetails() {
+    def sessionCheck() {
         if (session == null) {
             def pane = swing.optionPane(message:'You must log in first.')
-            def dialog = pane.createDialog(frame, 'Error')
-            dialog.show()
-        } else {
+                    def dialog = pane.createDialog(frame, 'Error')
+                    dialog.show()
+                    return false
+        }
+        return true
+    }
+    
+    def showPartnerDetails() {
+        if (sessionCheck()) {            
             partnerDetailsAction.get(session, session.getPartnerUri())
         }
     }
+    
+    // an attempt to consolidate how all these dialogs are created.
+    def createDialog(title) {
+        return swing.dialog(title: title, 
+                            modal:true, alwaysOnTop: true, 
+                            locationRelativeTo: null, resizable: false)
+    }
 
     def setRESTCallback() {
-        if (session == null) {
-            def pane = swing.optionPane(message:'You must log in first.')
-            def dialog = pane.createDialog(frame, 'Error')
-            dialog.show()
-        } else {
-            def serverDialog = swing.dialog(title: 'Set REST Callback Endpoint', modal:true, alwaysOnTop: true, locationRelativeTo: null, resizable: false)
+        if (sessionCheck()) {
+            def serverDialog = createDialog('Set REST Callback Endpoint')
             def panel = swing.panel{
                 vbox {
                     hbox{
@@ -125,7 +136,9 @@ class MainClientView {
                         textField(columns: 20, id: 'uri')
                     }
                     hbox{
-                        button('OK', actionPerformed: {setRESTCallbackAction.setRESTCallback(session, uri.text); serverDialog.dispose()})
+                        button('OK', actionPerformed: {
+                            setRESTCallbackAction.setRESTCallback(session, uri.text); 
+                            serverDialog.dispose()})
                         button('Cancel', actionPerformed: {serverDialog.dispose()})
                     }
                 }
@@ -136,18 +149,13 @@ class MainClientView {
         }
     }
 
-    def sessionCheck() {
-        if (session == null) {
-            def pane = swing.optionPane(message:'You must log in first.')
-                    def dialog = pane.createDialog(frame, 'Error')
-                    dialog.show()
-            return false
-        }
-        return true
-    }
+    /**
+     * Present a dialog to ask for account number and then call EvenUp to
+     * generate an invitation token.
+     */
     def addInvitation() {
         if (sessionCheck()) {
-            def serverDialog = swing.dialog(title: 'Add Invitation', modal:true, alwaysOnTop: true, locationRelativeTo: null, resizable: false)
+            def serverDialog = createDialog('Add Invitation')
             def panel = swing.panel{
                 vbox {
                     hbox{
@@ -155,7 +163,15 @@ class MainClientView {
                         textField(columns: 20, id: 'accountNumber')
                     }
                     hbox{
-                        button('OK', actionPerformed: {addInvitationAction.addInvite(session, accountNumber.text); serverDialog.dispose()})
+                        button('OK', actionPerformed: {
+                            def result = addInvitationAction.addInvite(session, accountNumber.text);
+                            serverDialog.dispose();
+                            swing.optionPane().showMessageDialog(null, new JTextArea(
+                                """An invitation was created, with code \"${result[0].code}\" and zip \"${result[0].zip}\".
+You can enter this in the UI to create an account."""),
+                                "Invitation Code",
+                                JOptionPane.INFORMATION_MESSAGE)
+                            })
                         button('Cancel', actionPerformed: {serverDialog.dispose()})
                     }
                 }
@@ -166,45 +182,62 @@ class MainClientView {
         }
     }
     
+    /**
+     * Present the user with all the fields in the template and choice of reply
+     * templates.  On OK, send the REST server a TEMPLATE event.
+     * 
+     * @param accountNum used to get the Account our of the AccountCollection.
+     * @param template the template to create an event for
+     * @param templates the templates to present for the reply template
+     */
     def sendTemplateEvent(accountNum, template, templates) {
-        Account account = accountCollection.getForNumber(accountNum)
-        // now find all the variables in the template and present them in a form:
-        def matcher = template.templateText =~ /\$\{(.*?)\}/
-        def serverDialog = swing.dialog(title: 'Template Event', modal:true, alwaysOnTop: true, locationRelativeTo: null, resizable: true)
-        def templateIds = ['None'] + templates.collect({it.id})
-        templateIds.unique()
-        def panel = swing.panel {
-            JComboBox<String> templateChosen
-            def fieldIds = [:]
-            vbox {
-                matcher.each {
-                    def fieldName = it[1]
-                    hbox {
-                        label(text: fieldName)
-                        def fieldId = fieldName + '-id'
-                        fieldIds[fieldName] = textField(columns: 30, id: fieldId)
+        if (sessionCheck()) {
+            
+            Account account = accountCollection.getForNumber(accountNum)
+            // find all the variables in the template and present them in a form:
+            def matcher = template.templateText =~ /\$\{(.*?)\}/
+            def serverDialog = createDialog('Template Event')
+            def templateIds = ['None'] + templates.collect({it.id})
+            def panel = swing.panel {
+                JComboBox<String> templateChosen
+                def templateFields = [:]
+                vbox {
+                    matcher.each {
+                        def fieldName = it[1]
+                        // treat field names as unique
+                        if (!(fieldName in templateFields)) {
+                            hbox {
+                                label(text: fieldName)
+                                def fieldId = fieldName + '-id'
+                                templateFields[fieldName] = textField(columns: 30, id: fieldId)
+                            }
+                        }
+                    }
+                    hbox{
+                        label(text: 'Reply Template')
+                        templateChosen = comboBox(items: templateIds)
+                    }
+                    hbox{
+                        button('Send', actionPerformed: {templateEventAction.sendTemplateEvent(session, 
+                            account.getAccountGuid(), 
+                            template.id, 
+                            templateChosen.selectedItemReminder.equals('None') ? null : templateChosen.selectedItemReminder, 
+                            templateFields.collectEntries([:]) {k,v -> [k, v.text]}); 
+                            serverDialog.dispose()})
+                        button('Cancel', actionPerformed: {serverDialog.dispose()})
                     }
                 }
-                hbox{
-                    label(text: 'Reply Template')
-                    templateChosen = comboBox(items: templateIds)
-                }
-                hbox{
-                    button('Send', actionPerformed: {templateEventAction.sendTemplateEvent(session, 
-                        account.getAccountGuid(), 
-                        template.id, 
-                        templateChosen.selectedItemReminder.equals('None') ? null : templateChosen.selectedItemReminder, 
-                        fieldIds.collectEntries([:]) {k,v -> [k, v.text]}); 
-                        serverDialog.dispose()})
-                    button('Cancel', actionPerformed: {serverDialog.dispose()})
-                }
             }
+            serverDialog.getContentPane().add(panel)
+            serverDialog.pack()
+            serverDialog.show()
         }
-        serverDialog.getContentPane().add(panel)
-        serverDialog.pack()
-        serverDialog.show()
     }
     
+    /**
+     * Present dialog that asks for account and template in dropdowns.  This then
+     * calls sendTemplateEvent to finish the job.
+     */
     def prepareTemplateEvent() {
         if (sessionCheck()) {
             def templates = partnerTemplatesAction.get(session, "${session.getPartnerUri()}/templates")
@@ -241,6 +274,9 @@ class MainClientView {
         }
     }
 
+    /**
+     * Starts the REST server if it is not already running.  Presents a dialog to ask for port.
+     */
     def startServer() {
         if (restServer.isRunning()) {
             def pane = swing.optionPane(message:'REST server is already running.')
@@ -249,7 +285,7 @@ class MainClientView {
             return
         }
 
-        def serverDialog = swing.dialog(title: 'Start REST Server', modal:true, alwaysOnTop: true, locationRelativeTo: null, resizable: true)
+        def serverDialog = createDialog('Start REST Server')
         def panel = swing.panel (preferredSize: [350, 150]){
             vbox {
                 hbox{
@@ -261,7 +297,10 @@ class MainClientView {
                     lineWrap: true, wrapStyleWord: true)
                 }
                 hbox{
-                    button('OK', actionPerformed: {restServer.setPort(Integer.valueOf(port.text));executor.execute(restServer); serverDialog.dispose()})
+                    button('OK', actionPerformed: {
+                        restServer.setPort(Integer.valueOf(port.text));
+                        executor.execute(restServer); 
+                        serverDialog.dispose()})
                     button('Cancel', actionPerformed: {serverDialog.dispose()})
                 }
             }
@@ -271,6 +310,9 @@ class MainClientView {
         serverDialog.show()
     }
 
+    /**
+     * Stops the REST server.
+     */
     def stopServer() {
         restServer.stop();
     }
@@ -309,9 +351,9 @@ class MainClientView {
                         menuItem(text: 'Login', mnemonic: 'L', actionPerformed: {login() })
                         menuItem(text: 'View Details', mnemonic: 'D', actionPerformed: {showPartnerDetails()})
                         menuItem(text: 'Set REST Callback', mnemonic: 'N', actionPerformed: {setRESTCallback()})
-                        menuItem(text: 'Add Invitation', mnemonic: 'I', actionPerformed: {addInvitation()})
                     }
                     menu(text: "Accounts", mnemonic: 'A') {
+                        menuItem(text: 'Add Invitation', mnemonic: 'I', actionPerformed: {addInvitation()})
                         menuItem(text: 'Send Template Event', mnemonic: 'T', actionPerformed: {prepareTemplateEvent()})
                     }
                     menu(text: "Callback Server") {
