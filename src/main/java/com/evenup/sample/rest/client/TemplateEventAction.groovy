@@ -1,23 +1,22 @@
 package com.evenup.sample.rest.client
 
-import java.nio.file.attribute.AclEntry.Builder;
+import groovy.json.JsonBuilder
+import groovy.json.JsonSlurper
 
-import javax.ws.rs.client.Entity;
-import javax.ws.rs.core.MediaType;
-import javax.ws.rs.core.Response;
+import javax.ws.rs.client.Entity
+import javax.ws.rs.core.MediaType
+import javax.ws.rs.core.Response
 
-import groovy.json.JsonBuilder;
-import groovy.json.JsonSlurper;
-
-import com.evenup.sample.rest.accounts.AccountCollection;
+import com.evenup.sample.rest.accounts.AccountCollection
 
 /**
- * 
+ * Sends a template event for the given partner.  See sendTemplateEvent.
+ * <br><br>
  * Copyright 2014 EvenUp, Inc.
- * 
+ * <br><br>
  * THIS CODE IS INTENDED AS AN EXAMPLE ONLY.  IT HAS NOT BEEN TESTED AND 
  * SHOULD NOT BE USED IN A PRODUCTION ENVIRONMENT.
- * 
+ * <br><br>
  * THE  CODE IS  PROVIDED "AS  IS",  WITHOUT WARRANTY  OF ANY  KIND, EXPRESS  
  * OR IMPLIED,  INCLUDING BUT  NOT LIMITED  TO THE WARRANTIES  OF 
  * MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT.
@@ -29,14 +28,27 @@ class TemplateEventAction extends BaseAction {
 
     AccountCollection accountCollection
     
-    
-    def sendTemplateEvent(Session session, String accountGuid, String templateId, String replyTemplateId, fieldMap) {
+    /**
+     * Add a template event to the account's timeline.
+     * 
+     * @param session an active session
+     * @param accountId EvenUp account id
+     * @param templateId EvenUp template id
+     * @param replyTemplateId EvenUp template id to be used for reply.  null for none.
+     * @param fieldMap key are variables in the template text, with values to substitute
+     * @return json object returned from EvenUp
+     */
+    def sendTemplateEvent(Session session, 
+        String accountId, 
+        String templateId, 
+        String replyTemplateId, 
+        Map<String, String> fieldMap) {
         
         if (session.sessionId == null) {
             throw new IllegalStateException('You must login in prior to calling this.')
         }
         
-        String uri = "${session.getBaseUri()}/account/${accountGuid}/events"
+        String uri = "${session.getBaseUri()}/account/${accountId}/events"
         
         def jsonBuilder = new JsonBuilder()
         jsonBuilder(fieldMap)
