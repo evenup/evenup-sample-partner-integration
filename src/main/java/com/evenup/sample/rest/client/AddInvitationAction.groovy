@@ -29,9 +29,7 @@ class AddInvitationAction extends BaseAction {
 
     def addInvite(Session session, String accountNumber) {
 
-        if (session.sessionId == null) {
-            throw new IllegalStateException('You must login in prior to calling this.')
-        }
+        sessionCheck(session)
 
         // Invitations are are posted as an array of JSON objects.
         // This is an array of one.  Note, that this is as simple

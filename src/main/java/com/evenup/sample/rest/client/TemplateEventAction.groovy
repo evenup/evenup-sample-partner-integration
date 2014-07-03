@@ -44,9 +44,7 @@ class TemplateEventAction extends BaseAction {
         String replyTemplateId, 
         Map<String, String> fieldMap) {
         
-        if (session.sessionId == null) {
-            throw new IllegalStateException('You must login in prior to calling this.')
-        }
+        sessionCheck(session)
         
         String uri = "${session.getBaseUri()}/account/${accountId}/events"
         

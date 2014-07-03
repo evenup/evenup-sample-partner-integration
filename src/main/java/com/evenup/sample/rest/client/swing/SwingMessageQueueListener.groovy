@@ -38,8 +38,7 @@ class SwingMessageQueueListener implements Runnable {
         while(!stop) {
             def message = this.messageQ.poll(300, TimeUnit.MILLISECONDS)
             if (message != null) {
-                sink.append('\n--------------------\n')
-                sink.append(message)
+                sink.insert("${message}\n--------------------\n", 0)
             }
         }
     }

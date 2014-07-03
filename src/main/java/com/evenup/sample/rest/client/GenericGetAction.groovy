@@ -24,10 +24,8 @@ import javax.ws.rs.core.Response;
 class GenericGetAction extends BaseAction {
 
     def get(Session session, String uri) {
-        if (session.sessionId == null) {
-            throw new IllegalStateException('You must login in prior to calling this.')
-        }
-
+        sessionCheck(session)
+        
         jsonWriter.writeSent("GET", uri, '')
 
         Response response = client.target(uri)

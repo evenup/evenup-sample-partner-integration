@@ -27,10 +27,8 @@ class PartnerDetailsAction extends BaseAction {
 
     def getDetails(Session session) {
 
-        if (session.sessionId == null) {
-            throw new IllegalStateException('You must login in prior to calling this.')
-        }
-
+        sessionCheck(session)
+        
         jsonWriter.writeSent("GET", session.partnerUri, '')
 
         // We need to pass the token (sessionId) in session that we
