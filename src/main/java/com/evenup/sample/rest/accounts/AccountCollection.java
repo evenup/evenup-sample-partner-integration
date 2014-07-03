@@ -58,13 +58,4 @@ public class AccountCollection {
         return accountMap.get(accountNumber);
     }
     
-    public static void main(String[] args) {
-        
-        Account account = new Account("ACCOUNT_GUID", "12345", "token", "Joe", "Schmoe", null, null, null);
-        AccountCollection accountCollection = new AccountCollection("/tmp/accountDB");
-        accountCollection.add(account);
-        accountCollection.close();
-       
-    }
-    
 }

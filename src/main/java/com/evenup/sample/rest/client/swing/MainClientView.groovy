@@ -16,6 +16,7 @@ import com.evenup.sample.rest.client.GenericGetAction;
 import com.evenup.sample.rest.client.JsonWriter
 import com.evenup.sample.rest.client.LoginAction
 import com.evenup.sample.rest.client.PartnerDetailsAction
+import com.evenup.sample.rest.client.RefreshAccountCollectionAction;
 import com.evenup.sample.rest.client.Session
 import com.evenup.sample.rest.client.SetRESTCallbackAction
 import com.evenup.sample.rest.client.TemplateEventAction;
@@ -63,6 +64,7 @@ class MainClientView {
     GenericGetAction partnerDetailsAction
     TemplateEventAction templateEventAction
     GenericGetAction partnerTemplatesAction
+    RefreshAccountCollectionAction refreshAccountsAction
     
     // used to build all Swing objects.
     def swing = new SwingBuilder()
@@ -85,6 +87,19 @@ class MainClientView {
     // fromRest textAreas
     JsonWriter jWriter
 
+    // an attempt to consolidate how all these dialogs are created.
+    private createDialog(title) {
+        return swing.dialog(title: title, 
+                modal:true, alwaysOnTop: true)
+    }
+    
+    private prepAndShowDialog(dialog, panel) {
+        dialog.getContentPane().add(panel)
+        dialog.pack()
+        dialog.setLocationRelativeTo(frame)
+        dialog.show()
+    }
+    
     def login() {
         def loginDialog = createDialog('Login')
         def panel = swing.panel{
@@ -102,17 +117,14 @@ class MainClientView {
                     passwordField(columns: 20, id: 'password')
                 }
                 hbox{
-                    button('OK', actionPerformed: {
+                    button(action: action(id: 'okButton', name: 'OK', closure: {
                         session = loginAction.login(host.text, name.text, password.text); 
-                        loginDialog.dispose()})
+                        loginDialog.dispose()}, defaultButton: true))
                     button('Cancel', actionPerformed: {loginDialog.dispose()})
                 }
             }
         }
-        loginDialog.getContentPane().add(panel)
-        loginDialog.pack()
-        loginDialog.setLocationRelativeTo(frame)
-        loginDialog.show()
+        prepAndShowDialog(loginDialog, panel)
     }
 
     def sessionCheck() {
@@ -131,33 +143,32 @@ class MainClientView {
         }
     }
     
-    // an attempt to consolidate how all these dialogs are created.
-    def createDialog(title) {
-        return swing.dialog(title: title, 
-                            modal:true, alwaysOnTop: true)
-    }
-
     def setRESTCallback() {
         if (sessionCheck()) {
-            def serverDialog = createDialog('Set REST Callback Endpoint')
+            def dialog = createDialog('Set REST Callback Endpoint')
             def panel = swing.panel{
                 vbox {
                     hbox{
-                        label(text: 'URI ')
-                        textField(columns: 20, id: 'uri')
+                        label(text: 'HOST ')
+                        textField(columns: 30, id: 'host')
+                    }
+                    hbox{
+                        label(text: 'URI for Callbacks')
+                        textField(columns: 35, id: 'uri', 
+                            text: bind(
+                                source:host, 
+                                sourceProperty:'text', 
+                                converter: { v ->  v ? "$v/events": ''}))
                     }
                     hbox{
                         button('OK', actionPerformed: {
                             setRESTCallbackAction.setRESTCallback(session, uri.text); 
-                            serverDialog.dispose()})
-                        button('Cancel', actionPerformed: {serverDialog.dispose()})
+                            dialog.dispose()})
+                        button('Cancel', actionPerformed: {dialog.dispose()})
                     }
                 }
             }
-            serverDialog.getContentPane().add(panel)
-            serverDialog.pack()
-            serverDialog.setLocationRelativeTo(frame)
-            serverDialog.show()
+            prepAndShowDialog(dialog, panel)
         }
     }
 
@@ -167,7 +178,7 @@ class MainClientView {
      */
     def addInvitation() {
         if (sessionCheck()) {
-            def serverDialog = createDialog('Add Invitation')
+            def dialog = createDialog('Add Invitation')
             def panel = swing.panel{
                 vbox {
                     hbox{
@@ -177,21 +188,18 @@ class MainClientView {
                     hbox{
                         button('OK', actionPerformed: {
                             def result = addInvitationAction.addInvite(session, accountNumber.text);
-                            serverDialog.dispose();
+                            dialog.dispose();
                             swing.optionPane().showMessageDialog(null, new JTextArea(
                                 """An invitation was created, with code \"${result[0].code}\" and zip \"${result[0].zip}\".
 You can enter this in the UI to create an account."""),
                                 "Invitation Code",
                                 JOptionPane.INFORMATION_MESSAGE)
                             })
-                        button('Cancel', actionPerformed: {serverDialog.dispose()})
+                        button('Cancel', actionPerformed: {dialog.dispose()})
                     }
                 }
             }
-            serverDialog.getContentPane().add(panel)
-            serverDialog.pack()
-            serverDialog.setLocationRelativeTo(frame)
-            serverDialog.show()
+            prepAndShowDialog(dialog, panel)
         }
     }
     
@@ -209,12 +217,16 @@ You can enter this in the UI to create an account."""),
             Account account = accountCollection.getForNumber(accountNum)
             // find all the variables in the template and present them in a form:
             def matcher = template.templateText =~ /\$\{(.*?)\}/
-            def serverDialog = createDialog('Template Event')
+            def dialog = createDialog('Template Event')
             def templateIds = ['None'] + templates.collect({it.id})
             def panel = swing.panel {
                 JComboBox<String> templateChosen
                 def templateFields = [:]
                 vbox {
+                    // this will go through all substrings in the template text
+                    // that match the regex above.  "it" is groovy's magical variable
+                    // used in a closure when iterating over collections to reference 
+                    // the item in the collection.
                     matcher.each {
                         def fieldName = it[1]
                         // treat field names as unique
@@ -232,19 +244,16 @@ You can enter this in the UI to create an account."""),
                     }
                     hbox{
                         button('Send', actionPerformed: {templateEventAction.sendTemplateEvent(session, 
-                            account.getAccountGuid(), 
+                            account.getAccountResourceURI(), 
                             template.id, 
                             templateChosen.selectedItemReminder.equals('None') ? null : templateChosen.selectedItemReminder, 
                             templateFields.collectEntries([:]) {k,v -> [k, v.text]}); 
-                            serverDialog.dispose()})
-                        button('Cancel', actionPerformed: {serverDialog.dispose()})
+                            dialog.dispose()})
+                        button('Cancel', actionPerformed: {dialog.dispose()})
                     }
                 }
             }
-            serverDialog.getContentPane().add(panel)
-            serverDialog.pack()
-            serverDialog.setLocationRelativeTo(frame)
-            serverDialog.show()
+            prepAndShowDialog(dialog, panel)
         }
     }
     
@@ -255,11 +264,14 @@ You can enter this in the UI to create an account."""),
     def prepareTemplateEvent() {
         if (sessionCheck()) {
             def templates = partnerTemplatesAction.get(session, "${session.getPartnerUri()}/templates")
+            
+            // build a map of templates by their ids
             def templateMap = [:]
             templates.each {
                 templateMap[it.id] = it
             }
-            def serverDialog = swing.dialog(title: 'Accounts', modal:true, 
+            
+            def dialog = swing.dialog(title: 'Accounts', modal:true, 
                                             alwaysOnTop: true, locationRelativeTo: null, 
                                             resizable: true)
             def panel = swing.panel {
@@ -277,15 +289,12 @@ You can enter this in the UI to create an account."""),
                     hbox{
                         button('OK', actionPerformed: {
                             sendTemplateEvent(account.selectedItem, templateMap[template.selectedItem], templates); 
-                            serverDialog.dispose()})
-                        button('Cancel', actionPerformed: {serverDialog.dispose()})
+                            dialog.dispose()})
+                        button('Cancel', actionPerformed: {dialog.dispose()})
                     }
                 }
             }
-            serverDialog.getContentPane().add(panel)
-            serverDialog.pack()
-            serverDialog.setLocationRelativeTo(frame)
-            serverDialog.show()
+            prepAndShowDialog(dialog, panel)
         }
     }
 
@@ -320,10 +329,7 @@ You can enter this in the UI to create an account."""),
                 }
             }
         }
-        serverDialog.getContentPane().add(panel)
-        serverDialog.pack()
-        serverDialog.setLocationRelativeTo(frame)
-        serverDialog.show()
+        prepAndShowDialog(serverDialog, panel)
     }
 
     /**
@@ -345,6 +351,8 @@ You can enter this in the UI to create an account."""),
         partnerDetailsAction = new GenericGetAction(jsonWriter: jWriter)
         partnerTemplatesAction = new GenericGetAction(jsonWriter: jWriter)
         templateEventAction = new TemplateEventAction(jsonWriter: jWriter)
+        refreshAccountsAction = new RefreshAccountCollectionAction(jsonWriter: jWriter, 
+            accountCollection: accountCollection)
     }
     
 
@@ -371,6 +379,8 @@ You can enter this in the UI to create an account."""),
                     menu(text: "Accounts", mnemonic: 'A') {
                         menuItem(text: 'Add Invitation', mnemonic: 'I', actionPerformed: {addInvitation()})
                         menuItem(text: 'Send Template Event', mnemonic: 'T', actionPerformed: {prepareTemplateEvent()})
+                        menuItem(text: 'Refresh Account Collection', actionPerformed: {
+                            if (sessionCheck()) refreshAccountsAction.refreshAccounts(session)})
                     }
                     menu(text: "Callback Server") {
                         menuItem(text: 'Start', mnemonic: 'S', actionPerformed: {startServer()})

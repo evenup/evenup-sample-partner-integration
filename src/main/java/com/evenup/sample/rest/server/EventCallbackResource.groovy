@@ -71,15 +71,13 @@ public class EventCallbackResource {
         // Groovy allows me to deal with it quickly, just creating objects on 
         // the fly. 
         if (jsonObj.type.equals("ACCOUNT_CREATED")) {
-            println '''
+            println """
                        Someone has activated their invitation (${jsonObj.token}) in EvenUp!  
-                       Their account guid is ${jsonObj.accountGuid}'''
+                       Their account guid is ${jsonObj.accountGuid}"""
             // This will allow me to query and send events to that account later.
             accountCollection.add(new Account(  jsonObj.accountGuid,
                                             jsonObj.accountNumber,
                                             jsonObj.token,
-                                            jsonObj.firstName,
-                                            jsonObj.lastName,
                                             jsonObj.acn,
                                             jsonObj.acnExtension,
                                             jsonObj.acnPass)) 

@@ -34,10 +34,8 @@ class SetRESTCallbackAction extends BaseAction {
      */
     def setRESTCallback(Session session, String uri) {
 
-        if (session.sessionId == null) {
-            throw new IllegalStateException('You must login in prior to calling this.')
-        }
-
+        sessionCheck(session)
+        
         // When we POST this, it will add this to "notification methods".
         // N.B. We are using the sessionId from logging in.
         String json

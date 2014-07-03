@@ -21,11 +21,9 @@ import groovy.transform.Immutable
  */
 @Immutable class Account implements Serializable {
 
-    String accountGuid;
+    String accountResourceURI;
     String accountNumber;
     String token;
-    String firstName;
-    String lastName;
     String acn;
     String acnExtension;
     String acnPass;

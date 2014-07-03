@@ -62,11 +62,16 @@ class LoginAction extends BaseAction {
             return null;
         }
 
+        // This is our session token, which needs to be pass to 
+        // subsequent requests.  Every HTTP framework should have 
+        // a mechanism to do this - get an http header value.
         String sessionId = response.getHeaderString(Session.X_EVEN_UP_TOKEN)
 
         // JsonSlurper is a nifty Groovy utility that puts JSON into an object structure
         // In this case, we get back an array of links, the first (and only)
-        // off which points to the Partner that just logged in.
+        // of which points to the Partner that just logged in.
+        // I am packing all this into a Session object that I can reference
+        // for my other requests.
         def slurper = new JsonSlurper()
         def result = slurper.parseText(json)
         String partnerUri = result.links[0].href

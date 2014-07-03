@@ -42,4 +42,11 @@ abstract class BaseAction {
             println "${verb}'d to ${uri}: \n ${json}"
         }
     }
+    
+    def sessionCheck(Session session) {
+        if (session == null || session.sessionId == null) {
+            throw new IllegalStateException('You must login in prior to calling this.')
+        }
+    }
+
 }
