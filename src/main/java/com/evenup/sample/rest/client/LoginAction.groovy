@@ -29,6 +29,10 @@ import org.glassfish.jersey.client.authentication.HttpAuthenticationFeature
  */
 class LoginAction extends BaseAction {
     
+    def login(host, username, password) {
+        return login(host, username, password, 'partnerLogin')
+    }
+    
     /**
      * Log in to EvenUp and start a session.
      * 
@@ -37,7 +41,7 @@ class LoginAction extends BaseAction {
      * @param password
      * @return a new {@link Session} when successful and null otherwise.
      */
-    def login(host, username, password) {
+    def login(host, username, password, loginPath) {
 
         def baseUri = host + '/api'
         // In a production app, I would not recommend creating a Client each time.
@@ -47,11 +51,11 @@ class LoginAction extends BaseAction {
 
         // This jsonWriter is used to notify others of the JSON going to/from
         // the server.
-        jsonWriter.writeSent('POST', baseUri + '/partnerLogin', '')
+        jsonWriter.writeSent('POST', baseUri + "/${loginPath}", '')
 
         // To log in to EvenUp as a partner, we POST to <host>/api/partnerLogin, using
         // HTTP Basic Auth (see above).
-        Response response = client.target(baseUri).path("partnerLogin")
+        Response response = client.target(baseUri).path(loginPath)
                 .request(MediaType.APPLICATION_JSON)
                 .post(Entity.entity("", MediaType.APPLICATION_JSON))
 
