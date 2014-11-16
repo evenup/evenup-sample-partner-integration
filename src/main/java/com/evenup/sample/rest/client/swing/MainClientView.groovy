@@ -52,6 +52,10 @@ class MainClientView {
     }
 
     Executor executor = Executors.newFixedThreadPool(4);
+    
+    // TODO we should add a resource for these and make this dynamic
+    static String[] BUILT_IN_VARIABLES = ["partner.name", "partner.phoneNumber", "member.firstName",
+            "member.lastName", "account.name", "event.creationTime"]
 
     AccountCollection accountCollection 
     JettyRESTServer restServer
@@ -216,7 +220,8 @@ You can enter this in the UI to create an account."""),
             
             Account account = accountCollection.getForNumber(accountNum)
             // find all the variables in the template and present them in a form:
-            def matcher = template.templateText =~ /\$\{(.*?)\}/
+            def matcher = template.en.templateText =~ /\$\{(.*?)\}/
+            def fieldTypes = template.fieldTypes
             def dialog = createDialog('Template Event')
             def templateIds = ['None'] + templates.collect({it.id})
             def panel = swing.panel {
@@ -230,9 +235,9 @@ You can enter this in the UI to create an account."""),
                     matcher.each {
                         def fieldName = it[1]
                         // treat field names as unique
-                        if (!(fieldName in templateFields)) {
+                        if (!(fieldName in templateFields) && !(fieldName in BUILT_IN_VARIABLES)) {
                             hbox {
-                                label(text: fieldName)
+                                label(text: "${fieldName} [${fieldTypes[fieldName]}]")
                                 def fieldId = fieldName + '-id'
                                 templateFields[fieldName] = textField(columns: 30, id: fieldId)
                             }
