@@ -78,7 +78,10 @@ class LoginAction extends BaseAction {
         // for my other requests.
         def slurper = new JsonSlurper()
         def result = slurper.parseText(json)
-        String partnerUri = result.links[0].href
+        String partnerUri = null
+        if (result.links != null) {
+            partnerUri = result.links[0].href
+        }
         return new Session(baseUri: baseUri, partnerUri: partnerUri, sessionId: sessionId)
     }
 
