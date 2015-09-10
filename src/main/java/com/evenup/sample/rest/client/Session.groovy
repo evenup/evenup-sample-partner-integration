@@ -23,5 +23,6 @@ class Session {
     String sessionId
     String partnerUri
     String baseUri
+    String memberUri
     
 }
