@@ -16,7 +16,7 @@ class RefreshAccountCollectionActionTest extends RESTClientSpecification {
     AccountCollection accountCollection = Mock()
     Session session = new Session(sessionId: 'SESSION_ID')
     
-    void setup() {
+    def setup() {
         rac = new RefreshAccountCollectionAction(
             accountCollection: accountCollection, 
             client: client)
@@ -77,10 +77,6 @@ class RefreshAccountCollectionActionTest extends RESTClientSpecification {
     {
       "rel":"account-events",
       "href":"http://192.168.30.10/api/account/5a1d910c-2faf-4fd8-a581-69961336c4d7/events"
-    },
-    {
-      "rel":"account-event-categories",
-      "href":"http://192.168.30.10/api/accountEventCategories"
     },
     {
       "rel":"member",

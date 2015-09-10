@@ -15,7 +15,7 @@ class RESTClientSpecification extends Specification {
     Builder builder = Mock()
     
     
-    void setup() {
+    def setup() {
         client.target(_) >> target
         target.request(MediaType.APPLICATION_JSON) >> request
         request.header(Session.X_EVEN_UP_TOKEN, _) >> builder
